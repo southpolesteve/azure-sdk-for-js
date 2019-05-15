@@ -1,4 +1,9 @@
-import { deserializationPolicy, RequestPolicyFactory } from "@azure/ms-rest-js";
+import {
+  deserializationPolicy,
+  proxyPolicy,
+  getDefaultProxySettings,
+  RequestPolicyFactory
+} from "@azure/ms-rest-js";
 
 import { BrowserPolicyFactory } from "./BrowserPolicyFactory";
 import { Credential } from "./credentials/Credential";
@@ -13,12 +18,24 @@ import { escapeURLPath } from "./utils/utils.common";
 export { deserializationPolicy };
 
 /**
+ * Interface of proxy policy options.
+ *
+ * @export
+ * @interface ProxyOptions
+ */
+
+export interface ProxyOptions {
+  proxySettings?: string;
+}
+
+/**
  * Option interface for Pipeline.newPipeline method.
  *
  * @export
  * @interface INewPipelineOptions
  */
 export interface INewPipelineOptions {
+  proxyOptions?: ProxyOptions;
   /**
    * Telemetry configures the built-in telemetry policy behavior.
    *
@@ -56,6 +73,7 @@ export abstract class StorageURL {
     // The credential's policy factory must appear close to the wire so it can sign any
     // changes made by other factories (like UniqueRequestIDPolicyFactory)
     const factories: RequestPolicyFactory[] = [
+      proxyPolicy(getDefaultProxySettings((pipelineOptions.proxyOptions || {}).proxySettings)),
       new TelemetryPolicyFactory(pipelineOptions.telemetry),
       new UniqueRequestIDPolicyFactory(),
       new BrowserPolicyFactory(),

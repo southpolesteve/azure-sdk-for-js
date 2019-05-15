@@ -1,9 +1,4 @@
-import {
-  deserializationPolicy,
-  proxyPolicy,
-  getDefaultProxySettings,
-  RequestPolicyFactory
-} from "@azure/ms-rest-js";
+import { deserializationPolicy, RequestPolicyFactory } from "@azure/ms-rest-js";
 
 import { BrowserPolicyFactory } from "./BrowserPolicyFactory";
 import { Credential } from "./credentials/Credential";
@@ -18,24 +13,12 @@ import { escapeURLPath } from "./utils/utils.common";
 export { deserializationPolicy };
 
 /**
- * Interface of proxy policy options.
- *
- * @export
- * @interface ProxyOptions
- */
-
-export interface ProxyOptions {
-  proxySettings?: string;
-}
-
-/**
  * Option interface for Pipeline.newPipeline method.
  *
  * @export
  * @interface INewPipelineOptions
  */
 export interface INewPipelineOptions {
-  proxyOptions?: ProxyOptions;
   /**
    * Telemetry configures the built-in telemetry policy behavior.
    *
@@ -50,17 +33,17 @@ export interface INewPipelineOptions {
 }
 
 /**
- * A ServiceURL represents a based URL class for ServiceURL, ContainerURL and etc.
+ * A ServiceClient represents a based URL class for ServiceClient, ContainerURL and etc.
  *
  * @export
- * @class StorageURL
+ * @class StorageClient
  */
-export abstract class StorageURL {
+export abstract class StorageClient {
   /**
    * A static method used to create a new Pipeline object with Credential provided.
    *
    * @static
-   * @param {Credential} credential Such as AnonymousCredential, SharedKeyCredential or TokenCredential.
+   * @param {Credential} credential Such as AnonymousCredential, SharedKeyCredential.
    * @param {INewPipelineOptions} [pipelineOptions] Optional. Options.
    * @returns {Pipeline} A new Pipeline object.
    * @memberof Pipeline
@@ -73,7 +56,6 @@ export abstract class StorageURL {
     // The credential's policy factory must appear close to the wire so it can sign any
     // changes made by other factories (like UniqueRequestIDPolicyFactory)
     const factories: RequestPolicyFactory[] = [
-      proxyPolicy(getDefaultProxySettings((pipelineOptions.proxyOptions || {}).proxySettings)),
       new TelemetryPolicyFactory(pipelineOptions.telemetry),
       new UniqueRequestIDPolicyFactory(),
       new BrowserPolicyFactory(),
@@ -94,15 +76,15 @@ export abstract class StorageURL {
    *
    * @internal
    * @type {Pipeline}
-   * @memberof StorageURL
+   * @memberof StorageClient
    */
   public readonly pipeline: Pipeline;
 
   /**
-   * Encoded URL string value.
+   * URL string value.
    *
    * @type {string}
-   * @memberof StorageURL
+   * @memberof StorageClient
    */
   public readonly url: string;
 
@@ -112,27 +94,30 @@ export abstract class StorageURL {
    *
    * @protected
    * @type {StorageClient}
-   * @memberof StorageURL
+   * @memberof StorageClient
    */
   protected readonly storageClientContext: StorageClientContext;
 
   /**
-   * Creates an instance of StorageURL.
+   * Creates an instance of StorageClient.
    * @param {string} url
    * @param {Pipeline} pipeline
-   * @memberof StorageURL
+   * @memberof StorageClient
    */
   protected constructor(url: string, pipeline: Pipeline) {
     // URL should be encoded and only once, protocol layer shouldn't encode URL again
     this.url = escapeURLPath(url);
+
     this.pipeline = pipeline;
     this.storageClientContext = new StorageClientContext(
       this.url,
       pipeline.toServiceClientOptions()
     );
 
-    // Override protocol layer's default content-type
+    // Remove the default content-type in generated code of StorageClientContext
     const storageClientContext = this.storageClientContext as any;
-    storageClientContext.requestContentType = undefined;
+    if (storageClientContext.requestContentType) {
+      storageClientContext.requestContentType = undefined;
+    }
   }
 }

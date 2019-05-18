@@ -73,13 +73,13 @@ export abstract class StorageClient {
     // The credential's policy factory must appear close to the wire so it can sign any
     // changes made by other factories (like UniqueRequestIDPolicyFactory)
     const factories: RequestPolicyFactory[] = [
-      proxyPolicy(getDefaultProxySettings((pipelineOptions.proxyOptions || {}).proxySettings)),
       new TelemetryPolicyFactory(pipelineOptions.telemetry),
       new UniqueRequestIDPolicyFactory(),
       new BrowserPolicyFactory(),
       deserializationPolicy(), // Default deserializationPolicy is provided by protocol layer
       new RetryPolicyFactory(pipelineOptions.retryOptions),
       new LoggingPolicyFactory(),
+      proxyPolicy(getDefaultProxySettings((pipelineOptions.proxyOptions || {}).proxySettings)),
       credential
     ];
 

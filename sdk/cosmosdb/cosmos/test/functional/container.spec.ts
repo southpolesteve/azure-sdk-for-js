@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import assert from "assert";
+import { assertEquals } from "typescript-is";
 import { Constants } from "../../dist-esm";
 import { ContainerDefinition, Database } from "../../dist-esm/client";
 import { ContainerRequest } from "../../dist-esm/client/Container/ContainerRequest";
@@ -13,7 +14,7 @@ import {
 } from "../../dist-esm/documents";
 import { getTestDatabase, removeAllDatabases, getTestContainer } from "../common/TestHelpers";
 
-describe("Containers", function() {
+describe.only("Containers", function() {
   this.timeout(process.env.MOCHA_TIMEOUT || 10000);
   beforeEach(async function() {
     await removeAllDatabases();
@@ -36,6 +37,10 @@ describe("Containers", function() {
       }
 
       const { resource: containerDef } = await database.containers.create(containerDefinition);
+
+      console.log(containerDef);
+      assertEquals<ContainerDefinition>(containerDef);
+
       const container = database.container(containerDef.id);
       assert.equal(containerDefinition.id, containerDef.id);
       assert.equal("consistent", containerDef.indexingPolicy.indexingMode);

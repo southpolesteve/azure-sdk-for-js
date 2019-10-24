@@ -4,7 +4,7 @@ import PriorityQueue from "priorityqueuejs";
 import semaphore from "semaphore";
 import { ClientContext } from "../ClientContext";
 import { logger } from "../common/logger";
-import { StatusCodes, SubStatusCodes } from "../common/statusCodes";
+import { StatusCodes } from "../common/statusCodes";
 import { FeedOptions, Response } from "../request";
 import { PartitionedQueryExecutionInfo } from "../request/ErrorResponse";
 import { QueryRange } from "../routing/QueryRange";
@@ -287,11 +287,7 @@ export abstract class ParallelQueryExecutionContextBase implements ExecutionCont
 
   private static _needPartitionKeyRangeCacheRefresh(error: any) {
     // TODO: any error
-    return (
-      error.code === StatusCodes.Gone &&
-      "substatus" in error &&
-      error["substatus"] === SubStatusCodes.PartitionKeyRangeGone
-    );
+    return error.code === StatusCodes.Gone;
   }
 
   /**

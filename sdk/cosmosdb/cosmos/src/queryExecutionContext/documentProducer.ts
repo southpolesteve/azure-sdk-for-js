@@ -1,14 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import { ClientContext } from "../ClientContext";
-import {
-  Constants,
-  getIdFromLink,
-  getPathFromLink,
-  ResourceType,
-  StatusCodes,
-  SubStatusCodes
-} from "../common";
+import { Constants, getIdFromLink, getPathFromLink, ResourceType, StatusCodes } from "../common";
 import { FeedOptions } from "../request";
 import { Response } from "../request";
 import { DefaultQueryExecutionContext } from "./defaultQueryExecutionContext";
@@ -141,11 +134,7 @@ export class DocumentProducer {
 
   private static _needPartitionKeyRangeCacheRefresh(error: any) {
     // TODO: error
-    return (
-      error.code === StatusCodes.Gone &&
-      "substatus" in error &&
-      error["substatus"] === SubStatusCodes.PartitionKeyRangeGone
-    );
+    return error.code === StatusCodes.Gone;
   }
 
   /**

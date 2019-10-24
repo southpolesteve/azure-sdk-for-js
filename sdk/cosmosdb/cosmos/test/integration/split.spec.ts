@@ -59,7 +59,6 @@ describe("Partition Splits", () => {
             hasSplit = true;
             const error = new Error("Fake Partition Split") as any;
             error.code = 410;
-            error.substatus = SubStatusCodes.PartitionKeyRangeGone;
             throw error;
           }
           if (partitionKeyRangeId) {

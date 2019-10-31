@@ -140,6 +140,8 @@ export class DocumentProducer {
   }
 
   private static _needPartitionKeyRangeCacheRefresh(error: any) {
+    console.log("MADE IT 2");
+    console.log(new Error().stack);
     // TODO: error
     return (
       error.code === StatusCodes.Gone &&
@@ -189,6 +191,7 @@ export class DocumentProducer {
     } catch (err) {
       // TODO: any error
       if (DocumentProducer._needPartitionKeyRangeCacheRefresh(err)) {
+        console.log("SPLITHAPP");
         // Split just happend
         // Buffer the error so the execution context can still get the feedResponses in the itemBuffer
         const bufferedError = new FetchResult(undefined, err);

@@ -27,7 +27,7 @@ const generateDocuments = function(docSize: number) {
 
 const documentDefinitions = generateDocuments(20);
 
-describe("Partition Splits", () => {
+describe.only("Partition Splits", () => {
   let container: Container;
 
   before(async function() {
@@ -65,6 +65,41 @@ describe("Partition Splits", () => {
           if (partitionKeyRangeId) {
             partitionKeyRanges.add(partitionKeyRangeId);
           }
+          return next(context);
+        }
+      }
+    ];
+    const client = new CosmosClient({
+      ...options,
+      plugins
+    } as any);
+    const { resources } = await client
+      .database(container.database.id)
+      .container(container.id)
+      .items.query("SELECT * FROM root r", { maxItemCount: 2, maxDegreeOfParallelism: 1 })
+      .fetchAll();
+
+    // TODO. These should be equal but right now they are not
+    // I suspect injecting a random 410 with out actually splitting the documents
+    // results in duplicates by trying to read from two partitions
+    assert(resources.length >= documentDefinitions.length);
+  });
+
+  it.only("split errors surface as 503", async () => {
+    const options: CosmosClientOptions = { endpoint, key: masterKey };
+    let shouldSplit = false;
+    const plugins: PluginConfig[] = [
+      {
+        on: PluginOn.request,
+        plugin: async (context, next) => {
+          const partitionKeyRangeId = context.headers[Constants.HttpHeaders.PartitionKeyRangeID];
+          if (partitionKeyRangeId === "0" && shouldSplit) {
+            const error = new Error("Fake Partition Split") as any;
+            error.code = 410;
+            error.substatus = SubStatusCodes.PartitionKeyRangeGone;
+            throw error;
+          }
+          shouldSplit = true;
           return next(context);
         }
       }

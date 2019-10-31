@@ -89,11 +89,13 @@ export async function execute({
       retryPolicies.resourceThrottleRetryPolicy.currentRetryAttemptCount;
     response.headers[Constants.ThrottleRetryWaitTimeInMs] =
       retryPolicies.resourceThrottleRetryPolicy.cummulativeWaitTimeinMilliseconds;
+    console.log(new Date(), response.code);
     return response;
   } catch (err) {
     // TODO: any error
     let retryPolicy: RetryPolicy = null;
     const headers = err.headers || {};
+    console.log(new Date(), err.code, headers[Constants.HttpHeaders.PartitionKeyRangeID]);
     if (err.code === StatusCodes.Forbidden && err.substatus === SubStatusCodes.WriteForbidden) {
       retryPolicy = retryPolicies.endpointDiscoveryRetryPolicy;
     } else if (err.code === StatusCodes.TooManyRequests) {

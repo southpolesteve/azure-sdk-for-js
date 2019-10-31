@@ -286,6 +286,7 @@ export abstract class ParallelQueryExecutionContextBase implements ExecutionCont
   }
 
   private static _needPartitionKeyRangeCacheRefresh(error: any) {
+    console.log("MADE IT 1");
     // TODO: any error
     return (
       error.code === StatusCodes.Gone &&

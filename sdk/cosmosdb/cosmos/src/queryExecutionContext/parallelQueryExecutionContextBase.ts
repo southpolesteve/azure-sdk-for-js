@@ -37,7 +37,6 @@ export abstract class ParallelQueryExecutionContextBase implements ExecutionCont
   private requestContinuation: any;
   private respHeaders: CosmosHeaders;
   private orderByPQ: PriorityQueue<DocumentProducer>;
-  private sem: any;
   private waitingForInternalExecutionContexts: number;
   /**
    * Provides the ParallelQueryExecutionContextBase.
@@ -87,9 +86,7 @@ export abstract class ParallelQueryExecutionContextBase implements ExecutionCont
     this.orderByPQ = new PriorityQueue<DocumentProducer>(
       (a: DocumentProducer, b: DocumentProducer) => this.documentProducerComparator(b, a)
     );
-    // Creating the documentProducers
-    this.sem = semaphore(1);
-    // Creating callback for semaphore
+
     // TODO: Code smell
     const createDocumentProducersAndFillUpPriorityQueueFunc = async () => {
       // ensure the lock is released after finishing up
@@ -453,51 +450,6 @@ export abstract class ParallelQueryExecutionContextBase implements ExecutionCont
           });
         };
         this._repairExecutionContextIfNeeded(ifCallback, elseCallback).catch(reject);
-      });
-    });
-  }
-
-  /**
-   * Retrieve the current element on the ParallelQueryExecutionContextBase.
-   * @memberof ParallelQueryExecutionContextBase
-   * @instance
-   * @param {callback} callback - Function to execute for the current element. \
-   * the function takes two parameters error, element.
-   */
-  public async current(): Promise<Response<any>> {
-    if (this.err) {
-      this.err.headerse = this._getAndResetActiveResponseHeaders();
-      throw this.err;
-    }
-    return new Promise<Response<any>>((resolve, reject) => {
-      this.sem.take(() => {
-        try {
-          if (this.err) {
-            this.err = this._getAndResetActiveResponseHeaders();
-            throw this.err;
-          }
-
-          if (this.orderByPQ.size() === 0) {
-            return resolve({
-              result: undefined,
-              headers: this._getAndResetActiveResponseHeaders()
-            });
-          }
-
-          const ifCallback = () => {
-            // Reexcute the function
-            return resolve(this.current());
-          };
-
-          const elseCallback = () => {
-            const documentProducer = this.orderByPQ.peek();
-            return resolve(documentProducer.current());
-          };
-
-          this._repairExecutionContextIfNeeded(ifCallback, elseCallback).catch(reject);
-        } finally {
-          this.sem.leave();
-        }
       });
     });
   }
